@@ -331,6 +331,7 @@ class _ScreenOneState extends State<ScreenOne> {
                               const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
                                 crossAxisSpacing: 16,
+                                mainAxisSpacing: 12,
                               ),
                           itemBuilder: (context, index) {
                             final option = options[index];
