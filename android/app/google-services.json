@@ -7,28 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:802685742859:android:c024db6f96f2d664173c0e",
+        "mobilesdk_app_id": "1:802685742859:android:b6575c6e35c2f345173c0e",
         "android_client_info": {
-          "package_name": "com.example.pandai"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyCIcmSFxKdXlaDHMEykErldYWzYyAgpG8E"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:802685742859:android:deb73a291cca8913173c0e",
-        "android_client_info": {
-          "package_name": "com.teguh.pandai"
+          "package_name": "com.teguhdev.pandai"
         }
       },
       "oauth_client": [],
