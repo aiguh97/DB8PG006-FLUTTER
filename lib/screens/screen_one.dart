@@ -6,6 +6,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_mlkit_translation/google_mlkit_translation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:lottie/lottie.dart';
+import 'package:pandai/screens/screen_two.dart';
 
 class ScreenOne extends StatefulWidget {
   final int levelNumber;
@@ -209,7 +210,13 @@ class _ScreenOneState extends State<ScreenOne> {
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          // Navigator.push(context,MaterialPageRoute(builder: (_)=>ScreenTwo(levelNumber:widget.levelNumber)))
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  ScreenTwo(levelNumber: widget.levelNumber),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: greenPrimary,

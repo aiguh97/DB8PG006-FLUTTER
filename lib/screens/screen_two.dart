@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_mlkit_translation/google_mlkit_translation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:lottie/lottie.dart';
+import 'package:pandai/constant/theme.dart';
+import 'package:pandai/screens/screen_three.dart';
 
 class ScreenTwo extends StatefulWidget {
   final int levelNumber;
@@ -95,14 +98,6 @@ class _ScreenTwoState extends State<ScreenTwo> {
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    player.dispose();
-    flutterTts.stop();
-    translator.close();
-  }
-
   Future<void> _fetchTask() async {
     try {
       final doc = await FirebaseFirestore.instance
@@ -127,7 +122,7 @@ class _ScreenTwoState extends State<ScreenTwo> {
           options.add({
             'textEn': opt['text'],
             'textTranslated': translatedText,
-            'isCorrext': opt['isCorrect'],
+            'isCorrect': opt['isCorrect'],
           });
         }
         setState(() {});
@@ -138,7 +133,308 @@ class _ScreenTwoState extends State<ScreenTwo> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    player.dispose();
+    flutterTts.stop();
+    translator.close();
+  }
+
+  void _speak(String text) async {
+    if (text.isNotEmpty) {
+      await flutterTts.speak(text);
+    }
+  }
+
+  void _handleSelection(String textTranslated) {
+    setState(() {
+      selectedOption = textTranslated;
+    });
+  }
+
+  void _checkAnswer() {
+    if (selectedOption.isEmpty) return;
+
+    final selectedOptionData = options.firstWhere(
+      (opt) => opt['textTranslated'] == selectedOption,
+      orElse: () => {},
+    );
+
+    final isCorrect = selectedOptionData['isCorrect'] ?? false;
+
+    _playFeedback(isCorrect);
+
+    setState(() {
+      isCorrectedAnswerSelected = isCorrect;
+    });
+  }
+
+  void _playFeedback(bool isCorrect) {
+    final soundAsset = isCorrect
+        ? 'assets/sound/success.mp3'
+        : 'assets/sound/fail.mp3';
+    player.setAsset(soundAsset).then((_) => player.play());
+
+    final animationType = isCorrect ? 'success' : 'failure';
+    _showResultBottomSheet(animationType, isCorrect);
+  }
+
+  void _showResultBottomSheet(String animationType, bool isCorrect) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.4,
+          maxChildSize: 0.6,
+          builder: (_, controller) {
+            return Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(30),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Lottie.asset(
+                    animationType == 'success'
+                        ? 'assets/animation/correct.json'
+                        : 'assets/animation/fail.json',
+                    height: 150,
+                  ),
+                  const SizedBox(height: 20),
+                  if (isCorrect)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  ScreenThree(levelNumber: widget.levelNumber),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: greenPrimary,
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+
+                        child: const Text(
+                          'CONTINUE',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold();
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+        child: SafeArea(
+          child: options.isEmpty
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: Icon(
+                              Icons.close,
+                              color: Colors.black87,
+                              size: 28,
+                            ),
+                          ),
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(30),
+                              ),
+                              child: const LinearProgressIndicator(
+                                value: 0.5,
+                                backgroundColor: Colors.blueGrey,
+                                valueColor: AlwaysStoppedAnimation(
+                                  greenPrimary,
+                                ),
+                                minHeight: 8,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsetsGeometry.symmetric(horizontal: 20),
+                      child: Text(
+                        subTitle,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    Padding(
+                      padding: EdgeInsetsGeometry.symmetric(horizontal: 20),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => _speak(questionTranslated),
+                            icon: const Icon(Icons.volume_up),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Text(
+                                "$questionTranslated\n[$questionEn]",
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: ListView.builder(
+                          itemCount: options.length,
+                          itemBuilder: (context, index) {
+                            final option = options[index];
+                            final isSelected =
+                                selectedOption == option['textTranslated'];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: GestureDetector(
+                                onTap: () =>
+                                    _handleSelection(option['textTranslated']),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                    horizontal: 20,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? greenPrimary
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? greenPrimary
+                                          : Colors.grey.shade300,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    "${option['textTranslated']}\n[${option['textEn']}]",
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Colors.black87,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 20,
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: selectedOption.isEmpty
+                              ? null
+                              : () {
+                                  print('teguhhhhhh ${options.toString()}');
+                                  debugPrint(options.toString());
+
+                                  _checkAnswer();
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: greenPrimary,
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text(
+                            'CHECK',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
   }
 }
